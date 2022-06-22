@@ -7,6 +7,7 @@
 package table
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -15,6 +16,7 @@ import (
 	"sync"
 
 	"github.com/golang/snappy"
+	"github.com/pierrec/lz4/v4"
 
 	"github.com/syndtr/goleveldb/leveldb/cache"
 	"github.com/syndtr/goleveldb/leveldb/comparer"
@@ -592,6 +594,15 @@ func (r *Reader) readRawBlock(bh blockHandle, verifyChecksum bool) ([]byte, erro
 			return nil, r.newErrCorruptedBH(bh, err.Error())
 		}
 		data = decData
+	case blockTypeLZ4Compression:
+		var buff bytes.Buffer
+		lz4Reader := lz4.NewReader(&buff)
+		_, err := lz4Reader.Read(data[:bh.length])
+		r.bpool.Put(data)
+		if err != nil {
+			return nil, r.newErrCorruptedBH(bh, err.Error())
+		}
+		data = buff.Bytes()
 	default:
 		r.bpool.Put(data)
 		return nil, r.newErrCorruptedBH(bh, fmt.Sprintf("unknown compression type %#x", data[bh.length]))

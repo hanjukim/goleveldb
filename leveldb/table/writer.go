@@ -7,12 +7,14 @@
 package table
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
 
 	"github.com/golang/snappy"
+	"github.com/pierrec/lz4/v4"
 
 	"github.com/syndtr/goleveldb/leveldb/comparer"
 	"github.com/syndtr/goleveldb/leveldb/filter"
@@ -181,6 +183,15 @@ func (w *Writer) writeBlock(buf *util.Buffer, compression opt.Compression) (bh b
 		n := len(compressed)
 		b = compressed[:n+blockTrailerLen]
 		b[n] = blockTypeSnappyCompression
+	} else if compression == opt.LZ4Compression {
+		var buff bytes.Buffer
+		w := lz4.NewWriter(&buff)
+		w.Write(buf.Bytes())
+		w.Close()
+		n := buff.Len()
+		buff.Write(make([]byte, 0, blockTrailerLen))
+		b = buff.Bytes()
+		b[n] = blockTypeLZ4Compression
 	} else {
 		tmp := buf.Alloc(blockTrailerLen)
 		tmp[0] = blockTypeNoCompression

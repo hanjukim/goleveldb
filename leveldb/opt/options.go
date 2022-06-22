@@ -116,6 +116,8 @@ func (c Compression) String() string {
 		return "none"
 	case SnappyCompression:
 		return "snappy"
+	case LZ4Compression:
+		return "lz4"
 	}
 	return "invalid"
 }
@@ -124,6 +126,7 @@ const (
 	DefaultCompression Compression = iota
 	NoCompression
 	SnappyCompression
+	LZ4Compression
 	nCompression
 )
 
