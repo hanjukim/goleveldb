@@ -189,7 +189,7 @@ func (w *Writer) writeBlock(buf *util.Buffer, compression opt.Compression) (bh b
 		w.Write(buf.Bytes())
 		w.Close()
 		n := buff.Len()
-		buff.Write(make([]byte, 0, blockTrailerLen))
+		buff.Write(make([]byte, blockTrailerLen))
 		b = buff.Bytes()
 		b[n] = blockTypeLZ4Compression
 	} else {
